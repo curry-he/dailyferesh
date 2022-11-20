@@ -137,3 +137,12 @@ TINYMCE_DEFAULT_CONFIG = {
 # django认证系统使用的模型类
 
 # AUTH_USER_MODEL = 'apps.user.User'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.qq.com'
+EMAIL_PORT = 25
+EMAIL_HOST_USER = '202632144@qq.com'
+EMAIL_HOST_PASSWORD = 'wzclluuqnckebjfd'
+FROM_EMAIL = '202632144@qq.com'
+
+
