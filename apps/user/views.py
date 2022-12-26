@@ -8,7 +8,7 @@ from itsdangerous import URLSafeTimedSerializer as Serializer
 from itsdangerous import SignatureExpired
 from dailyfresh import settings
 from django.core.mail import send_mail
-
+from celery_tasks.tasks import send_register_activate_email
 
 # Create your views here.
 # /user/register
@@ -163,19 +163,21 @@ class RegisterView(View):
         token = serializer.dumps(info)
         token = token.decode()
         # 发邮件
-        subject = '天天生鲜激活邮件'
-        message = ''
-        from_email = settings.FROM_EMAIL
-        recipient_list = [email]
-        html_message = '<h1>%s, 欢迎您注册成为天天生鲜会员</h1>清点击下面链接激活您的账户<br/><a ' \
-                       'href="http:127.0.0.1:8000/active/%s">http:127.0.0.1:8000/active/%s</a> ' % {username, token,
-                                                                                                    token}
-        send_mail(
-            subject,
-            message,
-            from_email,
-            recipient_list
-        )
+        # subject = '天天生鲜激活邮件'
+        # message = ''
+        # from_email = settings.FROM_EMAIL
+        # recipient_list = [email]
+        # html_message = '<h1>%s, 欢迎您注册成为天天生鲜会员</h1>清点击下面链接激活您的账户<br/><a ' \
+        #                'href="http:127.0.0.1:8000/active/%s">http:127.0.0.1:8000/active/%s</a> ' % {username, token,
+        #                                                                                             token}
+        # send_mail(
+        #     subject,
+        #     message,
+        #     from_email,
+        #     recipient_list
+        # )
+        # celery异步发送邮件
+        send_register_activate_email.delay(email, username, token)
         # 返回应答
         # 注册完成后，跳转到首页
         # return redirect(reverse('goods:index'))
