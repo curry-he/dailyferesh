@@ -9,6 +9,8 @@ from itsdangerous import SignatureExpired
 from dailyfresh import settings
 from django.core.mail import send_mail
 from celery_tasks.tasks import send_register_activate_email
+from django.contrib.auth import authenticate, login
+
 
 # Create your views here.
 # /user/register
@@ -208,4 +210,71 @@ class ActiveView(View):
 
 class LoginView(View):
     def get(self, request):
-        return render(request, 'login.html')
+        """显示登录页面"""
+        # 判断是否记住用户名
+        if 'username' in request.COOKIES:
+            username  = request.COOKIES.get('username')
+            checked = 'checked'
+        else:
+            username = ''
+            checked = ''
+        return render(request, 'login.html',{'username':username, 'checked':checked})
+
+    def post(self, request):
+        """登录校验"""
+        # 接收数据
+        username = request.POST.get('username')
+        password = request.POST.get('pwd')
+        # 校验数据
+        if not all([username, password]):
+            return render(request, 'login.html', {'errmsg': '数据不完整'})
+        # 业务处理
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            # 用户名密码正确
+            if user.is_active:
+                # 用户已激活
+                # 记录用户登录状态
+                login(request, user)
+                response = redirect(reverse('goods:index'))
+                # 判断是否需要记住用户名
+                remember = request.POST.get('remember')
+                if remember == 'on'
+                    # 需要记住用户名
+                    response.set_cookie('username', username, max_age=7*24*3600)
+                else:
+                    response.delete_cookie('username')
+                # 返回response
+                return response
+
+            else:
+                # 用户未激活
+                return render(request, 'login.html', {'errmsg': '用户未激活'})
+        else:
+            # 用户名或密码错误
+            return render(request, 'login.html', {'errmsg': '用户名或密码错误'})
+
+
+class UserInfoView(View):
+    def get(self, request):
+        """用户信息显示"""
+        return render(request, 'user_center_info.html')
+
+    def post(self, request):
+
+
+
+class UserOrderView(View):
+    def get(self, request):
+        """订单显示"""
+        return render(request, 'user_center_order.html')
+
+    def post(self, request):
+
+
+class AddressView(View):
+    def get(self, request):
+        """地址显示"""
+        return render(request, 'user_center_site.html')
+
+    def post(self, request):

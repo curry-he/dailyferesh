@@ -3,7 +3,7 @@ from django.conf import settings
 from celery import Celery
 
 # 创建一个Celery类的实例对象
-celery = Celery('celery_tasks.tasks', broker='redis://192.168.5.157:6379/8')
+celery = Celery('celery_tasks.tasks', broker='redis://192.168.5.157:6379/0')
 
 
 # 定义任务函数
