@@ -145,6 +145,7 @@ EMAIL_HOST_USER = '202632144@qq.com'
 EMAIL_HOST_PASSWORD = 'wzclluuqnckebjfd'
 FROM_EMAIL = '202632144@qq.com'
 
+# django缓存配置
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -155,5 +156,11 @@ CACHES = {
     }
 }
 
+# 配置session存储
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
+
+# 配置登录url地址
+LOGIN_URL = '/user/login'
+
+

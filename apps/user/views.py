@@ -8,8 +8,11 @@ from itsdangerous import URLSafeTimedSerializer as Serializer
 from itsdangerous import SignatureExpired
 from dailyfresh import settings
 from django.core.mail import send_mail
+from apps.user.models import User, Address
 from celery_tasks.tasks import send_register_activate_email
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
+from utils.mixin import LoginRequiredMixin
+from apps.goods.models import GoodsSKU
 
 
 # Create your views here.
@@ -213,12 +216,12 @@ class LoginView(View):
         """显示登录页面"""
         # 判断是否记住用户名
         if 'username' in request.COOKIES:
-            username  = request.COOKIES.get('username')
+            username = request.COOKIES.get('username')
             checked = 'checked'
         else:
             username = ''
             checked = ''
-        return render(request, 'login.html',{'username':username, 'checked':checked})
+        return render(request, 'login.html', {'username': username, 'checked': checked})
 
     def post(self, request):
         """登录校验"""
@@ -236,12 +239,15 @@ class LoginView(View):
                 # 用户已激活
                 # 记录用户登录状态
                 login(request, user)
-                response = redirect(reverse('goods:index'))
+                # 获取登录后所要跳转的地址
+                next_url = request.GET.get('next', reverse('goods:index'))
+                # 跳转到next_url
+                response = redirect(next_url)
                 # 判断是否需要记住用户名
                 remember = request.POST.get('remember')
-                if remember == 'on'
+                if remember == 'on':
                     # 需要记住用户名
-                    response.set_cookie('username', username, max_age=7*24*3600)
+                    response.set_cookie('username', username, max_age=7 * 24 * 3600)
                 else:
                     response.delete_cookie('username')
                 # 返回response
@@ -255,26 +261,115 @@ class LoginView(View):
             return render(request, 'login.html', {'errmsg': '用户名或密码错误'})
 
 
-class UserInfoView(View):
+# /user/logout
+class LogOutView(View):
+    """退出登录"""
+
+    def get(self, request):
+        """退出登录页面"""
+        logout(request)
+        # 跳转到首页
+        return redirect(reverse('goods:index'))
+
+
+# /user/info
+class UserInfoView(LoginRequiredMixin, View):
     def get(self, request):
         """用户信息显示"""
         return render(request, 'user_center_info.html')
+        # 获取用户的个人信息
+        user = request.user
+        address = Address.objects.get_default_address(user)
 
-    def post(self, request):
+        # 获取用户的历史浏览记录
+        # from redis import StrictRedis
+        # redis = StrictRedis(host='127.0.0.1', port=6379, db=9)
+        from django_redis import get_redis_connection
+        con = get_redis_connection('default')
+        history_key = 'history%d' % user.id
+        # 获取用户最新浏览的5条数据
+        sku_ids = con.lrange(history_key, 0, 4)
+        # 从数据库中查询最近浏览的商品详情信息
+        # goods_li = GoodsSKU.objects.filter(id__in=sku_ids)
+        # goods_res = []
+        # for id in sku_ids:
+        #     for goods in goods_li:
+        #         if goods.id == id:
+        #             goods_res.append(goods)
+        #
+        goods_li = []
+        for id in sku_ids:
+            goods = GoodsSKU.objects.get(id=id)
+            goods_li.append(goods)
+        # 组织上下文
+        context = {
+            'page': 'user',
+            'address': address,
+            'goods_li': goods_li
+        }
+        return render(request, 'user_center_info.html', context)
 
 
-
-class UserOrderView(View):
+# /user/order
+class UserOrderView(LoginRequiredMixin, View):
     def get(self, request):
         """订单显示"""
+        # 获取用户的订单信息
+
         return render(request, 'user_center_order.html')
 
-    def post(self, request):
 
-
-class AddressView(View):
+# /user/address
+class AddressView(LoginRequiredMixin, View):
     def get(self, request):
         """地址显示"""
-        return render(request, 'user_center_site.html')
+        # 获取登录用户
+        user = request.user
+        # # 获取用户的默认收货地址
+        # try:
+        #     address = Address.objects.get(user=user, is_default=True)
+        # except Address.DoesNotExist:
+        #     # 不存在默认收货地址
+        #     address = None
+        address = Address.objects.get_default_address(user)
+
+        return render(request, 'user_center_site.html', {'page': address, 'address': address})
 
     def post(self, request):
+        """添加收货地址"""
+        # 接收数据
+        receiver = request.POST.get('receiver')
+        addr = request.POST.get('addr')
+        zip_code = request.POST.get('zip_code')
+        phone = request.POST.get('phone')
+        # 校验数据
+        if not all([receiver, addr, phone]):
+            return render(request, 'user_center_site.html', {'errmsg': '数据不完整'})
+        # 校验手机号
+        if not re.match(r'^1[3|4|5|7|8][0-9]{9}$', phone):
+            return render(request, 'user_center_site.html', {'errmsg': '手机号格式不正确'})
+
+        # 业务处理
+        # 如果已存在默认收货地址，就不设置为默认收货地址，否则就设置为默认收货地址
+        # 获取登录用户
+        user = request.user
+
+        # try:
+        #     address = Address.objects.get(user=user, is_default=True)
+        # except Address.DoesNotExist:
+        #     # 不存在默认收货地址
+        #     address = None
+        address = Address.objects.get_default_address(user)
+        if address:
+            is_default = False
+        else:
+            is_default = True
+        # 添加地址
+        Address.objects.create(user=user,
+                               receiver=receiver,
+                               address=addr,
+                               zip_code=zip_code,
+                               phone=phone,
+                               is_default=is_default)
+        # 返回应答
+        return redirect(reverse('user:address'))
