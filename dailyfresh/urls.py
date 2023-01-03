@@ -19,8 +19,8 @@ from django.urls import path, include, re_path
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('tinymce/', include('tinymce.urls')),
-    path('user/', include('apps.user.urls', namespace='user')),
-    path('goods', include('apps.goods.urls', namespace='goods')),
-    path('cart/', include('apps.cart.urls', namespace='cart')),
-    path('order/', include('apps.order.urls', namespace='order')),
+    path('user/', include('user.urls')),
+    path('goods', include('goods.urls')),
+    path('cart/', include('cart.urls')),
+    path('order/', include('order.urls'))
 ]

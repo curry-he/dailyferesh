@@ -2,7 +2,6 @@ from django.urls import path
 from django.contrib.auth.decorators import login_required
 from apps.user import views
 from apps.user.views import RegisterView, ActiveView, LoginView, LogOutView, UserInfoView, UserOrderView, AddressView
-app_name = 'user'
 urlpatterns = [
     # path('register/', views.register),  # /register
     # path('register_handler/', views.register_handler),  # /register_handler

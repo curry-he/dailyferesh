@@ -11,10 +11,11 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
 from pathlib import Path
-
+import sys
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
@@ -136,7 +137,7 @@ TINYMCE_DEFAULT_CONFIG = {
 
 # django认证系统使用的模型类
 
-# AUTH_USER_MODEL = 'apps.user.User'
+AUTH_USER_MODEL = 'user.User'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.qq.com'
@@ -163,4 +164,11 @@ SESSION_CACHE_ALIAS = "default"
 # 配置登录url地址
 LOGIN_URL = '/user/login'
 
+# 设置django文件存储类
+DEFAULT_FILE_STORAGE = 'utils.fdfs.storage.FDFSStorage'
 
+# 设置FDFS使用的配置文件
+FDFS_CLIENT_CONF = './utils/fdfs/client.conf'
+
+# 设置FDFS服务器上的nginx的ip和端口号
+FDFS_URL = 'http://192.168.5.157:8888'
