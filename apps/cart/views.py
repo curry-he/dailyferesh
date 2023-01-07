@@ -148,7 +148,7 @@ class CartDeleteView(View):
         # 校验商品是否存在
         try:
             sku = GoodsSKU.objects.get(id=sku_id)
-        except Exception.DosesNotExist as e:
+        except GoodsSKU.DoesNotExist:
             # 商品不存在
             return HttpResponse({'res': 2, 'errmsg': '商品不存在'})
         # 业务处理
@@ -159,5 +159,3 @@ class CartDeleteView(View):
 
         # 返回应答
         return HttpResponse({'res': 3, 'msg': '购物车删除商品成功'})
-
-
