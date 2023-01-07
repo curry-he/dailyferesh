@@ -1,7 +1,6 @@
-from django.urls import path, re_path
-
-from apps.goods import views
+from django.urls import path
+from apps.goods.views import IndexView
 
 urlpatterns = [
-    re_path(r'^$', views.index, name='index')  # index
+    path(r'^$', IndexView.as_view(), name='index')  # index
 ]
